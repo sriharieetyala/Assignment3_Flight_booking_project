@@ -9,6 +9,7 @@ import org.chubb.flightbookingapplication.repository.AirlineRepository;
 import org.chubb.flightbookingapplication.repository.FlightRepository;
 import org.chubb.flightbookingapplication.service.FlightService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -20,16 +21,37 @@ public class FlightServiceImpl implements FlightService {
     private final FlightRepository flightRepository;
     private final AirlineRepository airlineRepository;
 
-    public FlightServiceImpl(FlightRepository flightRepository, AirlineRepository airlineRepository) {
+    public FlightServiceImpl(FlightRepository flightRepository,
+                             AirlineRepository airlineRepository) {
         this.flightRepository = flightRepository;
         this.airlineRepository = airlineRepository;
     }
 
+    // ---------- ADD INVENTORY ----------
     @Override
-    public Flight addInventory(InventoryAddRequest request) {
-        Airline airline = airlineRepository.findById(request.getAirlineId())
-                .orElseThrow(() -> new IllegalStateException("Airline not found"));
+    @Transactional
+    public void addInventory(InventoryAddRequest request) {
 
+        // 1) Arrival must be after departure
+        if (!request.getArrivalTime().isAfter(request.getDepartureTime())) {
+            throw new IllegalArgumentException("Arrival time must be after departure time");
+        }
+
+        // 2) Duplicate flight check
+        boolean exists = flightRepository.existsByAirlineIdAndFlightNumberAndDepartureTime(
+                request.getAirlineId(),
+                request.getFlightNumber(),
+                request.getDepartureTime()
+        );
+        if (exists) {
+            throw new IllegalStateException("Flight already exists for this airline and departure time");
+        }
+
+        // 3) Airline must exist
+        Airline airline = airlineRepository.findById(request.getAirlineId())
+                .orElseThrow(() -> new IllegalArgumentException("Airline not found"));
+
+        // 4) Save flight
         Flight flight = Flight.builder()
                 .airline(airline)
                 .flightNumber(request.getFlightNumber())
@@ -44,11 +66,13 @@ public class FlightServiceImpl implements FlightService {
                 .active(true)
                 .build();
 
-        return flightRepository.save(flight);
+        flightRepository.save(flight);
     }
 
+    // ---------- SEARCH FLIGHTS ----------
     @Override
     public List<FlightSearchResponse> searchFlights(FlightSearchRequest request) {
+
         LocalDateTime start = request.getJourneyDate().atStartOfDay();
         LocalDateTime end = request.getJourneyDate().atTime(LocalTime.MAX);
 

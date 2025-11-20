@@ -4,13 +4,14 @@ import org.chubb.flightbookingapplication.dto.*;
 import org.chubb.flightbookingapplication.service.BookingService;
 import org.chubb.flightbookingapplication.service.FlightService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1.0/flight")
+@RequestMapping("/api/flight")
 public class FlightController {
 
     private final FlightService flightService;
@@ -22,9 +23,12 @@ public class FlightController {
     }
 
     @PostMapping("/airline/inventory/add")
-    public ResponseEntity<String> addInventory(@Valid @RequestBody InventoryAddRequest request) {
+
+    public ResponseEntity<String> addInventory(@Valid  @RequestBody InventoryAddRequest request) {
         flightService.addInventory(request);
-        return ResponseEntity.ok("Inventory added successfully");
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body("Inventory added successfully");
     }
 
     @PostMapping("/search")
@@ -33,10 +37,16 @@ public class FlightController {
     }
 
     @PostMapping("/booking/{flightId}")
-    public BookingResponse bookTicket(@PathVariable Long flightId,
-                                      @Valid @RequestBody BookingRequest request) {
+    public ResponseEntity<BookingResponse> bookTicket(
+            @PathVariable Long flightId,
+            @Valid @RequestBody BookingRequest request) {
+
         request.setFlightId(flightId);
-        return bookingService.bookTicket(request);
+        BookingResponse response = bookingService.bookTicket(request);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)   // <-- 201 Created
+                .body(response);
     }
 
     @GetMapping("/ticket/{pnr}")
@@ -52,6 +62,6 @@ public class FlightController {
     @DeleteMapping("/booking/cancel/{pnr}")
     public ResponseEntity<String> cancel(@PathVariable String pnr) {
         bookingService.cancelBooking(pnr);
-        return ResponseEntity.ok("Booking cancelled (if allowed)");
+        return ResponseEntity.ok("Booking cancelled ");
     }
 }

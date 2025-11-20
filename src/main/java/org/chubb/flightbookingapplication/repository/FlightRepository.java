@@ -15,4 +15,9 @@ public interface FlightRepository extends JpaRepository<Flight, Long> {
             LocalDateTime start,
             LocalDateTime end
     );
+    boolean existsByAirlineIdAndFlightNumberAndDepartureTime(
+            Long airlineId,
+            String flightNumber,
+            LocalDateTime departureTime
+    );
 }

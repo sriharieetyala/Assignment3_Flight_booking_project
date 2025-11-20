@@ -9,33 +9,37 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
+
 public class InventoryAddRequest {
 
-    @NotNull
+    @NotNull(message = "airlineId is required")
     private Long airlineId;
 
-    @NotBlank
+    @NotBlank(message = "flightNumber is required")
     private String flightNumber;
 
-    @NotBlank
+    @NotBlank(message = "fromPlace is required")
     private String fromPlace;
 
-    @NotBlank
+    @NotBlank(message = "toPlace is required")
     private String toPlace;
 
-    @NotNull
+    @NotNull(message = "departureTime is required")
     private LocalDateTime departureTime;
 
-    @NotNull
+    @NotNull(message = "arrivalTime is required")
     private LocalDateTime arrivalTime;
 
-    @NotNull
-    @DecimalMin("0.0")
+    @NotNull(message = "oneWayPrice is required")
+    @DecimalMin(value = "0.01", message = "oneWayPrice must be greater than zero")
     private BigDecimal oneWayPrice;
 
-    @DecimalMin("0.0")
+    @NotNull(message = "roundTripPrice is required")
+    @DecimalMin(value = "0.01", message = "roundTripPrice must be greater than zero")
     private BigDecimal roundTripPrice;
 
-    @Min(1)
+    @Min(value = 1, message = "totalSeats must be at least 1")
     private int totalSeats;
+
+
 }
